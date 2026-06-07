@@ -7,10 +7,14 @@
     "build": "tsc"
   },
   "dependencies": {
+    "@mdit-vue/plugin-headers": "^3.0.2",
+    "js-yaml": "^4.2.0",
     "markdown-it": "^14.2.0",
+    "markdown-it-front-matter": "^0.2.4",
     "markdown-it-replace-link": "^1.2.2"
   },
   "devDependencies": {
+    "@types/js-yaml": "^4.0.9",
     "@types/markdown-it": "^14.1.2",
     "@types/node": "^25.9.2",
     "typescript": "^5.5.3"

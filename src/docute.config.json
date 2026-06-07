@@ -1,0 +1,7 @@
+{
+  "titleSource": "frontmatter",
+  "orderSource": "frontmatter",
+  "mode": "spa",
+  "inputPath": "core/docs",
+  "outputPath": "core/dist"
+}

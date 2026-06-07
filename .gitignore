@@ -4,6 +4,8 @@
 /src/core/docs
 
 /src/core/dist/*
+/dist
+/src/core/output.html
 /node_modules
 npm-debug.log*
 yarn-debug.log*
