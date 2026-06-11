@@ -39,18 +39,18 @@ npx docurator create
 
 ## Quick start
 
+Open a terminal **inside the folder that holds your Markdown files**, then:
+
 ```bash
-# 1. scaffold a config + sample docs/ folder
-docurator init
-
-# 2. build the site
-docurator create
-
-# 3. preview locally with live reload
 docurator serve
 ```
 
-Then open <http://localhost:3000>.
+That's the whole thing. `serve` creates a config if one doesn't exist, builds the
+site, opens your browser at <http://localhost:3000>, and live-reloads on every save.
+
+Prefer to just build static files? Run `docurator create` instead — it also
+auto-creates the config on first run. Use `docurator init` only if you want to
+tweak the config before building.
 
 ---
 
@@ -58,13 +58,16 @@ Then open <http://localhost:3000>.
 
 | Command            | Description                                                       |
 | ------------------ | ----------------------------------------------------------------- |
-| `docurator init`      | Scaffold a `docurator.config.json` and a sample `docs/` folder.      |
+| `docurator init`      | Drop a `docurator.config.json` you can edit (optional).           |
 | `docurator create`    | Generate the website from your Markdown files.                    |
 | `docurator build`     | Alias of `create`.                                                |
-| `docurator serve`     | Build, serve locally, and live-reload on every change.            |
+| `docurator serve`     | Build, serve locally, open the browser, and live-reload.          |
 | `docurator dev`       | Alias of `serve`.                                                 |
 | `docurator help`      | Show help.                                                        |
 | `docurator version`   | Show the installed version.                                       |
+
+> `create` and `serve` auto-create `docurator.config.json` (using defaults) if it's
+> missing — so you can run either one in a fresh folder with no setup.
 
 ### Options
 
@@ -72,7 +75,7 @@ These flags override `docurator.config.json`:
 
 | Flag                          | Description                                  | Default     |
 | ----------------------------- | -------------------------------------------- | ----------- |
-| `-i, --input <dir>`           | Markdown source directory                    | `docs`      |
+| `-i, --input <dir>`           | Markdown source directory                    | `.`         |
 | `-o, --output <dir>`          | Output directory                             | `dist`      |
 | `-m, --mode <multi\|spa>`     | Multi-page or single-page                    | `multi`     |
 | `-t, --theme <name>`          | Theme (see list below)                       | `default`   |
@@ -84,15 +87,16 @@ These flags override `docurator.config.json`:
 | `--home <slug>`               | Slug to use as the home page                 | first page  |
 | `--custom-css <file>`         | Extra CSS appended after the theme           | —           |
 | `--port <number>`             | Dev-server port (`serve` only)               | `3000`      |
+| `--no-open`                   | Don't auto-open the browser (`serve` only)   | —           |
 | `--no-color`                  | Disable coloured output                      | —           |
 
 ### Examples
 
 ```bash
-docurator create
-docurator create --input . --theme neon --mode spa
+docurator serve
+docurator create --theme neon --mode spa
 docurator build -o ./site --nav right --page-nav scroll
-docurator serve --port 4000
+docurator serve --port 4000 --no-open
 ```
 
 ---
@@ -108,7 +112,7 @@ Docurator reads a `docurator.config.json` from the current working directory. Pr
   "titleSource": "auto",
   "orderSource": "auto",
   "mode": "multi",
-  "inputPath": "docs",
+  "inputPath": ".",
   "outputPath": "dist",
   "tiePriority": "file",
   "theme": "default",
@@ -122,7 +126,7 @@ Docurator reads a `docurator.config.json` from the current working directory. Pr
 | `titleSource` | string   | `"auto"`    | `frontmatter` \| `h1` \| `filename` \| `auto`          |
 | `orderSource` | string   | `"auto"`    | `frontmatter` \| `prefix` \| `alphabetical` \| `auto`  |
 | `mode`        | string   | `"multi"`   | `multi` \| `spa`                                       |
-| `inputPath`   | string   | `"docs"`    | Markdown source directory.                             |
+| `inputPath`   | string   | `"."`       | Markdown source directory (the current folder).        |
 | `outputPath`  | string   | `"dist"`    | Output directory.                                      |
 | `tiePriority` | string   | `"file"`    | When a file and folder share a numeric prefix.         |
 | `theme`       | string   | `"default"` | Built-in theme name.                                   |

@@ -1,6 +1,6 @@
 {
   "name": "docurator",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Turn a folder of Markdown into a beautiful documentation website — with one command.",
   "license": "MIT",
   "author": "itz-mune",
