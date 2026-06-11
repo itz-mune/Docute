@@ -2,7 +2,7 @@
 
 import * as fs from 'fs'
 import * as path from 'path'
-import {getFolderMeta, getFrontmatterTitle, getH1Title, headingFormat, sortFiles, stripOrderPrefix} from "./utils";
+import {getFolderMeta, getFrontmatterTitle, getH1Title, headingFormat, isSkippableDir, sortFiles, stripOrderPrefix} from "./utils";
 import { DocuratorConfig } from "./config";
 
 
@@ -60,7 +60,8 @@ export function buildNavNode(dirPath: string, config: DocuratorConfig): NavNode[
                 })
             }
         } else {
-            // 👈 this whole block was missing!
+            // never descend into the output dir, dotfolders, or node_modules
+            if (isSkippableDir(fullPath, config)) continue
             const children: NavNode[] = buildNavNode(fullPath, config)
             if (children.length > 0) {
                 // folder label: _meta.json title overrides the (prefix-stripped) dir name

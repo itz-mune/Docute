@@ -29,7 +29,7 @@
     "docurator": "dist/index.js"
   },
   "files": [
-    "dist",
+    "dist/**/*.js",
     "README.md"
   ],
   "scripts": {

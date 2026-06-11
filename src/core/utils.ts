@@ -23,6 +23,16 @@ const buildMode = buildConfig.mode
 export let frontmatterData: any = {}
 
 
+// When the input dir is "." the walkers would otherwise descend into the output
+// folder, .git, node_modules, etc. Skip the output dir, any dot-directory, and
+// node_modules so scanning the current directory "just works".
+export function isSkippableDir(fullPath: string, config: DocuratorConfig): boolean {
+    const base = path.basename(fullPath)
+    if (base.startsWith('.') || base === 'node_modules') return true
+    return path.resolve(fullPath) === path.resolve(config.outputPath)
+}
+
+
 export function getFrontmatterOrder(filePath: string): number {
     try {
         const content = fs.readFileSync(filePath, 'utf8')
@@ -286,13 +296,15 @@ export function stripOrderPrefix(name: string): string {
 // Every .md becomes a flat output (slug.html / #slug), so two files anywhere in
 // the tree that strip to the same slug would silently overwrite each other and
 // their links would clash. Walk the tree and fail the build if that happens.
-export function checkDuplicateSlugs(inputPath: string): void {
+export function checkDuplicateSlugs(inputPath: string, config: DocuratorConfig): void {
     const seen = new Map<string, string[]>()  // slug -> source paths
 
     function walk(dir: string): void {
         for (const entry of fs.readdirSync(dir)) {
             const fullPath = path.join(dir, entry)
             if (fs.statSync(fullPath).isDirectory()) {
+                // skip output dir / dotfolders / node_modules (matches the walkers)
+                if (isSkippableDir(fullPath, config)) continue
                 walk(fullPath)
             } else if (path.extname(entry) === '.md') {
                 const slug = stripOrderPrefix(path.basename(entry, '.md'))

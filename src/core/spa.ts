@@ -3,7 +3,7 @@ import * as fs from 'fs'
 import * as path from 'path'
 import { buildNavNode, buildSidebarHTML } from './scanner'
 // import replaceLink from 'markdown-it-replace-link'
-import { renderMarkdown, resolveTitle, sortFiles, stripOrderPrefix, getCodeCopyScript} from "./utils";
+import { renderMarkdown, resolveTitle, sortFiles, stripOrderPrefix, getCodeCopyScript, isSkippableDir} from "./utils";
 import { DocuratorConfig } from "./config";
 import { PageRef, buildPaginationFooter, spaButtonsScript, spaScrollScript } from "./pagination";
 import { colors } from "./colors";
@@ -58,6 +58,8 @@ function collectSections(dirPath: string, config: DocuratorConfig): Section[] {
                 })
             }
         } else {
+            // never descend into the output dir, dotfolders, or node_modules
+            if (isSkippableDir(fullPath, config)) continue
             const children: Section[] = collectSections(fullPath, config)
             if (children.length > 0) {
                 sections.push(...children)

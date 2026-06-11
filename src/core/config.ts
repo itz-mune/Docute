@@ -23,7 +23,7 @@ export const defaultConfig: DocuratorConfig = {
     titleSource: 'auto',
     orderSource: 'auto',
     mode: 'multi',
-    inputPath: 'docs',
+    inputPath: '.',
     outputPath: 'dist',
     tiePriority: 'file',
     theme: "default",

@@ -5,8 +5,18 @@
 import * as fs from 'fs'
 import * as path from 'path'
 import * as http from 'http'
+import { exec } from 'child_process'
 import { DocuratorConfig } from './config'
 import { colors, ui } from './colors'
+
+// open a URL in the user's default browser (best-effort, cross-platform)
+function openBrowser(url: string): void {
+    const cmd =
+        process.platform === 'win32' ? `start "" "${url}"` :
+        process.platform === 'darwin' ? `open "${url}"` :
+        `xdg-open "${url}"`
+    exec(cmd, () => { /* ignore — user can open the printed link manually */ })
+}
 
 // SSE endpoint the injected client polls for reload signals
 const RELOAD_PATH = '/__docurator_livereload'
@@ -43,7 +53,7 @@ const MIME: Record<string, string> = {
 // rebuild is supplied by the caller (index.ts build()) so serve stays decoupled
 type Rebuild = () => void
 
-export function serve(config: DocuratorConfig, rebuild: Rebuild, port = 3000): void {
+export function serve(config: DocuratorConfig, rebuild: Rebuild, port = 3000, autoOpen = true): void {
     // first build before we start listening
     try {
         rebuild()
@@ -111,13 +121,16 @@ export function serve(config: DocuratorConfig, rebuild: Rebuild, port = 3000): v
         })
     })
 
+    const url = `http://localhost:${port}`
     server.listen(port, () => {
         console.log(`\n${ui.heading('Docurator')} ${colors.gray('dev server running')}`)
-        console.log(`  ${colors.gray('→')} ${ui.link(`http://localhost:${port}`)}`)
+        console.log(`  ${colors.gray('→')} ${ui.link(url)}`)
         console.log(
             `${colors.gray('Watching')} ${ui.path(`"${config.inputPath}"`)} ` +
             `${colors.gray('for changes — press')} ${colors.bold('Ctrl+C')} ${colors.gray('to stop.')}\n`
         )
+        // pop the site open in the default browser (skip with --no-open)
+        if (autoOpen) openBrowser(url)
     })
 
     // notify every connected browser to reload

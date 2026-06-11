@@ -4,7 +4,7 @@
 import * as fs from 'fs'
 import * as path from 'path'
 import { buildNavNode, buildSidebarHTML } from './scanner'
-import { renderMarkdown, resolveTitle, sortFiles, stripOrderPrefix, getCodeCopyScript} from './utils'
+import { renderMarkdown, resolveTitle, sortFiles, stripOrderPrefix, getCodeCopyScript, isSkippableDir} from './utils'
 import { DocuratorConfig } from "./config";
 import { flattenNav, PageRef, buildPaginationFooter, multiScrollScript } from "./pagination";
 import { colors, ui } from "./colors";
@@ -86,7 +86,10 @@ function walk(ctx: BuildContext, inputPath: string): void {
         const files: string[] = fs.readdirSync(inputPath)
         const sorted: string[] = sortFiles(files, inputPath, ctx.config)
         for (const file of sorted) {
-            walk(ctx, path.join(inputPath, file))
+            const child = path.join(inputPath, file)
+            // skip output dir / dotfolders / node_modules when walking "."
+            if (fs.statSync(child).isDirectory() && isSkippableDir(child, ctx.config)) continue
+            walk(ctx, child)
         }
     }
 }
@@ -117,6 +120,10 @@ function writeIndexRedirect(ctx: BuildContext, pages: PageRef[]): void {
         ? ctx.config.home
         : pages[0].slug
     const target = `${home}.html`
+
+    // if the home page is already named "index", its own output IS index.html —
+    // writing a redirect here would overwrite that page with a self-redirect loop
+    if (target === 'index.html') return
 
     const html = `<!DOCTYPE html>
 <html lang="en">
