@@ -1,0 +1,8 @@
+✓ dist\theme.css (theme)
+✓ dist/index.html
+
+Docute dev server running
+  → http://localhost:3011
+Watching "." for changes — press Ctrl+C to stop.
+
+Change detected (02-resources) — rebuilding... reloaded.

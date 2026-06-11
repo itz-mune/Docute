@@ -3,7 +3,7 @@
 import * as fs from 'fs'
 import * as path from 'path'
 import {getFolderMeta, getFrontmatterTitle, getH1Title, headingFormat, sortFiles, stripOrderPrefix} from "./utils";
-import { DocuteConfig } from "./config";
+import { DocuratorConfig } from "./config";
 
 
 
@@ -28,7 +28,7 @@ export interface NavNode {
 
 //function to get a single big NavNode
 // @ts-ignore
-export function buildNavNode(dirPath: string, config: DocuteConfig): NavNode[] {
+export function buildNavNode(dirPath: string, config: DocuratorConfig): NavNode[] {
     const files: string[] = fs.readdirSync(dirPath)
     const nodes: NavNode[] = []
     const sorted: string[] = sortFiles(files, dirPath, config)
@@ -78,7 +78,7 @@ export function buildNavNode(dirPath: string, config: DocuteConfig): NavNode[] {
 
 
 //build the navbar
-export function buildSidebarHTML(nodes: NavNode[], config: DocuteConfig, mode: 'multi' | 'spa' = 'multi'): string {
+export function buildSidebarHTML(nodes: NavNode[], config: DocuratorConfig, mode: 'multi' | 'spa' = 'multi'): string {
     const items: string[] = nodes.map(node => {
         if (node.children) {
             return `

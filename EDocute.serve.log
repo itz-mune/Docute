@@ -1,0 +1,22 @@
+Done! Theme written to dist\theme.css
+Done! Written to dist\introduction.html
+Done! Written to dist\configuration.html
+Done! Written to dist\writing-content.html
+Done! Written to dist\getting-started.html
+Done! Written to dist\cli.html
+Done! Written to dist\api.html
+Done! Written to dist\faq.html
+
+Docute dev server running:
+  → http://localhost:4123
+Watching "src/core/docs" for changes — press Ctrl+C to stop.
+
+Change detected (03-faq.md) — rebuilding... Done! Theme written to dist\theme.css
+Done! Written to dist\introduction.html
+Done! Written to dist\configuration.html
+Done! Written to dist\writing-content.html
+Done! Written to dist\getting-started.html
+Done! Written to dist\cli.html
+Done! Written to dist\api.html
+Done! Written to dist\faq.html
+reloaded.

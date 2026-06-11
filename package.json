@@ -1,17 +1,51 @@
 {
-  "name": "docute",
+  "name": "docurator",
   "version": "1.0.0",
-  "description": "",
+  "description": "Turn a folder of Markdown into a beautiful documentation website — with one command.",
+  "license": "MIT",
+  "author": "itz-mune",
+  "homepage": "https://github.com/itz-mune/Docurator#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/itz-mune/Docurator.git"
+  },
+  "bugs": {
+    "url": "https://github.com/itz-mune/Docurator/issues"
+  },
+  "keywords": [
+    "documentation",
+    "markdown",
+    "static-site-generator",
+    "docs",
+    "ssg",
+    "markdown-to-html",
+    "cli"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
   "main": "dist/index.js",
+  "bin": {
+    "docurator": "dist/index.js"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
   "scripts": {
-    "build": "tsc"
+    "build": "tsc",
+    "prepare": "tsc"
   },
   "dependencies": {
     "@mdit-vue/plugin-headers": "^3.0.2",
     "js-yaml": "^4.2.0",
     "markdown-it": "^14.2.0",
+    "markdown-it-attrs": "^5.0.0",
+    "markdown-it-code-copy": "^0.2.3",
     "markdown-it-front-matter": "^0.2.4",
-    "markdown-it-replace-link": "^1.2.2"
+    "markdown-it-html5-media": "^0.8.0",
+    "markdown-it-replace-link": "^1.2.2",
+    "markdown-it-table": "^4.1.1"
   },
   "devDependencies": {
     "@types/js-yaml": "^4.0.9",
@@ -19,5 +53,7 @@
     "@types/node": "^25.9.2",
     "typescript": "^5.5.3"
   },
-  "private": true
+  "publishConfig": {
+    "access": "public"
+  }
 }

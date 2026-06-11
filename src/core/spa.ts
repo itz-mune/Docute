@@ -3,8 +3,10 @@ import * as fs from 'fs'
 import * as path from 'path'
 import { buildNavNode, buildSidebarHTML } from './scanner'
 // import replaceLink from 'markdown-it-replace-link'
-import { renderMarkdown, resolveTitle, sortFiles, stripOrderPrefix} from "./utils";
-import { DocuteConfig } from "./config";
+import { renderMarkdown, resolveTitle, sortFiles, stripOrderPrefix, getCodeCopyScript} from "./utils";
+import { DocuratorConfig } from "./config";
+import { PageRef, buildPaginationFooter, spaButtonsScript, spaScrollScript } from "./pagination";
+import { colors } from "./colors";
 
 
 //Interface
@@ -33,7 +35,7 @@ interface Section {
 
 
 // collects all MD files recursively and returns array of {id, content}
-function collectSections(dirPath: string, config: DocuteConfig): Section[] {
+function collectSections(dirPath: string, config: DocuratorConfig): Section[] {
     const items: string[] = fs.readdirSync(dirPath)
     const sections: Section[] = []
     const sorted: string[] = sortFiles(items, dirPath, config)
@@ -70,21 +72,29 @@ function collectSections(dirPath: string, config: DocuteConfig): Section[] {
 
 
 // builds the full single page HTML
-function buildSPATemplate(sections: Section[], sidebar: string): string {
-    const sectionsHTML = sections.map(section => `
-        <div id="${section.id}" class="spa-section">
+function buildSPATemplate(sections: Section[], sidebar: string, config: DocuratorConfig): string {
+    const isScroll = config.pageNav === 'scroll'
+    const pages: PageRef[] = sections.map(s => ({ slug: s.id, title: s.title }))
+
+    const sectionsHTML = sections.map((section, i) => `
+        <section id="${section.id}" class="spa-section">
             ${section.content}
-        </div>
+            ${isScroll ? '' : buildPaginationFooter(pages, i, 'spa')}
+        </section>
     `).join('\n')
+
+    const pageNavScript = isScroll ? spaScrollScript() : spaButtonsScript()
+    const bodyClass = isScroll ? 'nav-scroll' : 'nav-buttons'
 
     return `<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Docute</title>
+    <title>Docurator</title>
+    <link rel="stylesheet" href="theme.css">
   </head>
-  <body>
+  <body class="${bodyClass}">
     <nav>
       <ul>
         ${sidebar}
@@ -94,64 +104,20 @@ function buildSPATemplate(sections: Section[], sidebar: string): string {
       ${sectionsHTML}
     </main>
 
-    <script>
-      const allSections = document.querySelectorAll('.spa-section')
-
-      function showSection(id) {
-        allSections.forEach(section => {
-          section.style.display = section.id === id ? 'block' : 'none'
-        })
-      }
-
-      function setActiveLink(id) {
-        document.querySelectorAll('.nav-link').forEach(link => {
-          const href = link.getAttribute('href')
-          link.classList.toggle('active', href === '#' + id)
-        })
-      }
-
-      function handleHash() {
-        const id = window.location.hash.slice(1)
-        const target = document.getElementById(id)
-        if (target) {
-          showSection(id)
-          setActiveLink(id)
-        } else {
-          showSection(allSections[0].id)
-          setActiveLink(allSections[0].id)
-        }
-      }
-
-      document.querySelectorAll('.nav-link').forEach(link => {
-    link.addEventListener('click', (e) => {
-    e.preventDefault()
-    const href = link.getAttribute('href')
-    if (href) {
-        const id = href.replace('#', '')
-        console.log('Clicked id:', id)
-        console.log('Section found:', document.getElementById(id))
-        showSection(id)
-        setActiveLink(id)
-        history.pushState(null, '', href)
-    }
-})
-    })
-
-      window.addEventListener('hashchange', handleHash)
-      handleHash()
-    </script>
+    ${pageNavScript}
+    ${getCodeCopyScript(config)}
   </body>
 </html>`
 }
 
 // main entry point
-export function buildSPA(inputPath: string, config: DocuteConfig): void {
+export function buildSPA(inputPath: string, config: DocuratorConfig): void {
     const sections: Section[] = collectSections(inputPath, config)
     const navTree = buildNavNode(inputPath, config)
     const sidebar: string = buildSidebarHTML(navTree, config, 'spa')
-    const html: string = buildSPATemplate(sections, sidebar)
+    const html: string = buildSPATemplate(sections, sidebar, config)
 
     fs.mkdirSync(config.outputPath, { recursive: true })
     fs.writeFileSync(path.join(config.outputPath, 'index.html'), html, 'utf8')
-    console.log(`Done! Written to ${config.outputPath}/index.html`)
+    console.log(`${colors.green('✓')} ${colors.gray(`${config.outputPath}/index.html`)}`)
 }

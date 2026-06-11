@@ -4,13 +4,19 @@ import frontmatterPlugin from 'markdown-it-front-matter'
 import { headersPlugin } from '@mdit-vue/plugin-headers'
 import * as yaml from 'js-yaml'
 import * as path from 'path'
-import type { MarkdownItEnv } from '@mdit-vue/types'
-import type { DocuteConfig } from "./config";
+import type { DocuratorConfig } from "./config";
 import { loadConfig } from "./config";
 import * as fs from "node:fs";
+import markdownItAttrs from "markdown-it-attrs";
+import {markdownItTable} from "markdown-it-table";
+import markdownItCodeCopy from "markdown-it-code-copy";
+import { html5Media } from "markdown-it-html5-media";
+import { getCopyLabels, getCopyButtonHTML } from "./theme";
 
-// mode is fixed for a build, so resolve it once for link rewriting
-const buildMode = loadConfig().mode
+
+// config is fixed for a build, so resolve it once for link rewriting + copy labels
+const buildConfig = loadConfig()
+const buildMode = buildConfig.mode
 
 
 // stores frontmatter data after each render
@@ -135,7 +141,7 @@ export function renderMarkdown(content: string): RenderResult {
     return { html, frontmatter, env }
 }
 
-export function sortFiles(files: string[], dirPath: string, config: DocuteConfig): string[] {
+export function sortFiles(files: string[], dirPath: string, config: DocuratorConfig): string[] {
     return [...files].sort((a, b) => {
         if (config.orderSource === 'alphabetical') {
             return a.localeCompare(b)
@@ -237,11 +243,93 @@ export const md = markdownit({
     .use(headersPlugin, {
         level: [1, 2, 3]  // 👈 add this
     })
+    .use(markdownItAttrs)
+    .use( markdownItTable )
+    .use(markdownItCodeCopy, {
+        // inline SVG icon + label span, styled via theme.css (avoids both the
+        // MDI icon-font dependency and emoji glyphs that may not render)
+        element: getCopyButtonHTML(buildConfig),
+        iconClass: '',
+        iconStyle: '',
+        buttonStyle: '',
+    })
+    // turns ![](clip.mp4) / ![](audio.mp3) image syntax into <video>/<audio> tags
+    .use(html5Media)
 
+
+// client-side copy behaviour for markdown-it-code-copy buttons.
+// The plugin only emits the button + data-clipboard-text; for a static site we
+// wire the actual copy here using the browser Clipboard API (no clipboard.js).
+// The "copied" feedback text is theme-specific.
+export function getCodeCopyScript(config: DocuratorConfig): string {
+    const copiedLabel = getCopyLabels(config).copied
+    return `<script>
+  document.addEventListener('click', function (e) {
+    const btn = e.target.closest('.markdown-it-code-copy');
+    if (!btn) return;
+    const text = btn.getAttribute('data-clipboard-text') || '';
+    navigator.clipboard.writeText(text).then(function () {
+      const label = btn.querySelector('span') || btn;
+      const original = label.textContent;
+      label.textContent = ${JSON.stringify(copiedLabel)};
+      setTimeout(function () { label.textContent = original; }, 1200);
+    });
+  });
+</script>`
+}
 
 // strips a leading order prefix (e.g. "01-", "2.") to get a clean slug
 export function stripOrderPrefix(name: string): string {
     return name.replace(/^\d+[-_.\s]*/, '')
+}
+
+// Every .md becomes a flat output (slug.html / #slug), so two files anywhere in
+// the tree that strip to the same slug would silently overwrite each other and
+// their links would clash. Walk the tree and fail the build if that happens.
+export function checkDuplicateSlugs(inputPath: string): void {
+    const seen = new Map<string, string[]>()  // slug -> source paths
+
+    function walk(dir: string): void {
+        for (const entry of fs.readdirSync(dir)) {
+            const fullPath = path.join(dir, entry)
+            if (fs.statSync(fullPath).isDirectory()) {
+                walk(fullPath)
+            } else if (path.extname(entry) === '.md') {
+                const slug = stripOrderPrefix(path.basename(entry, '.md'))
+                const list = seen.get(slug) ?? []
+                list.push(fullPath)
+                seen.set(slug, list)
+            }
+        }
+    }
+    walk(inputPath)
+
+    const clashes = [...seen.entries()].filter(([, paths]) => paths.length > 1)
+    if (clashes.length > 0) {
+        const detail = clashes
+            .map(([slug, paths]) => `  "${slug}" <- ${paths.join(', ')}`)
+            .join('\n')
+        throw new Error(
+            `Docurator: duplicate page slugs detected — these would overwrite each other ` +
+            `and break links. Rename the files so each slug is unique:\n${detail}`
+        )
+    }
+}
+
+// Removes previously-generated output so renamed/deleted pages don't leave
+// orphan .html behind. Deliberately conservative: only deletes top-level
+// *.html and theme.css (exactly what Docurator emits) — never subdirectories or
+// other file types, so user assets (images/, fonts, etc.) are left intact.
+export function cleanOutput(outputPath: string): void {
+    if (!fs.existsSync(outputPath)) return
+
+    for (const entry of fs.readdirSync(outputPath)) {
+        const fullPath = path.join(outputPath, entry)
+        // skip anything that isn't a top-level file we own
+        if (!fs.statSync(fullPath).isFile()) continue
+        const isGenerated = entry.endsWith('.html') || entry === 'theme.css'
+        if (isGenerated) fs.rmSync(fullPath)
+    }
 }
 
 // formats any filename into Title Case
@@ -256,7 +344,7 @@ export function headingFormat(str: string): string {
 
 
 export function resolveTitle(
-    config: DocuteConfig,
+    config: DocuratorConfig,
     env: any,
     frontmatter: any,
     rawName: string
